@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VokaWrite</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0e10;
+  --surface: #18181c;
+  --surface2: #222228;
+  --border: #2e2e38;
+  --accent: #e8d5a3;
+  --accent2: #7c6fa0;
+  --green: #5ecb8a;
+  --red: #e8776a;
+  --blue: #5b9cf6;
+  --text: #f0ece2;
+  --muted: #6e6e80;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  padding-bottom: 72px;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ── HOME ── */
+#home {
+  align-items: center;
+  justify-content: flex-start;
+  padding: 40px 16px 60px;
+}
+.home-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.home-header h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 3rem;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.home-header p { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
+
+.api-bar {
+  width: 100%; max-width: 600px;
+  display: flex; gap: 8px; align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 32px;
+}
+.api-bar label { font-size: 0.65rem; color: var(--muted); white-space: nowrap; text-transform: uppercase; letter-spacing: 0.08em; }
+.api-bar input {
+  flex: 1; background: transparent; border: none; color: var(--text);
+  font-family: 'DM Mono', monospace; font-size: 0.78rem; outline: none;
+}
+
+.sets-header {
+  width: 100%; max-width: 600px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+.sets-header h2 { font-family: 'Fraunces', serif; font-size: 1.1rem; color: var(--accent); }
+
+.sets-list { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 10px; }
+
+.set-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.set-card:hover { border-color: var(--accent2); transform: translateY(-1px); }
+.set-card-info { flex: 1; }
+.set-card-name { font-family: 'Fraunces', serif; font-size: 1rem; color: var(--text); margin-bottom: 3px; }
+.set-card-meta { font-size: 0.68rem; color: var(--muted); }
+.set-card-lang { font-size: 0.65rem; padding: 2px 8px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
+.set-progress-bar { width: 100%; height: 3px; background: var(--surface2); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.set-progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.4s; }
+.set-card-actions { display: flex; gap: 6px; }
+.icon-btn {
+  background: transparent; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--muted); cursor: pointer; width: 30px; height: 30px;
+  font-size: 0.85rem; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.icon-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.icon-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+.empty-state {
+  width: 100%; max-width: 600px;
+  text-align: center; padding: 48px 20px;
+  color: var(--muted); font-size: 0.8rem; line-height: 1.8;
+  border: 1px dashed var(--border); border-radius: 12px;
+}
+.empty-state span { font-size: 2rem; display: block; margin-bottom: 12px; }
+
+/* MODE PICKER */
+.mode-picker {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; align-items: center; justify-content: center;
+  z-index: 50; animation: fadeIn 0.2s ease;
+}
+.mode-picker.open { display: flex; }
+.mode-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  width: 90%; max-width: 420px;
+}
+.mode-box h3 { font-family: 'Fraunces', serif; font-size: 1.3rem; color: var(--accent); margin-bottom: 20px; text-align: center; }
+.mode-options { display: flex; flex-direction: column; gap: 10px; }
+.mode-opt {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+.mode-opt:hover { border-color: var(--accent); }
+.mode-opt-title { font-size: 0.9rem; color: var(--text); margin-bottom: 3px; }
+.mode-opt-desc { font-size: 0.7rem; color: var(--muted); }
+
+/* ── SET EDITOR ── */
+#editor {
+  align-items: center;
+  padding: 24px 16px 60px;
+}
+.editor-topbar {
+  width: 100%; max-width: 680px;
+  display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+}
+.editor-topbar input {
+  flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--border);
+  color: var(--text); font-family: 'Fraunces', serif; font-size: 1.4rem;
+  padding: 6px 0; outline: none;
+}
+.editor-topbar input::placeholder { color: var(--muted); }
+
+.lang-toggle {
+  display: flex; gap: 6px; margin-bottom: 20px; width: 100%; max-width: 680px;
+}
+.lang-opt {
+  flex: 1; padding: 8px; border-radius: 8px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); cursor: pointer; font-family: 'DM Mono', monospace;
+  font-size: 0.75rem; transition: all 0.15s; text-align: center;
+}
+.lang-opt.active { background: var(--surface2); color: var(--accent); border-color: var(--accent2); }
+
+.word-rows { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.word-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
+.word-row input {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 12px; color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 0.82rem; outline: none; transition: border-color 0.2s; width: 100%;
+}
+.word-row input:focus { border-color: var(--accent2); }
+.word-row input::placeholder { color: var(--muted); }
+.col-labels { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-bottom: 4px; width: 100%; max-width: 680px; }
+.col-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; padding-left: 4px; }
+.btn-del {
+  background: transparent; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--red); cursor: pointer; width: 32px; height: 32px; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center; transition: background 0.2s;
+}
+.btn-del:hover { background: rgba(232,119,106,0.1); }
+
+/* IMPORT IN EDITOR */
+.import-section {
+  width: 100%; max-width: 680px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; margin-bottom: 16px;
+}
+.import-section summary {
+  font-size: 0.72rem; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.08em;
+  cursor: pointer; user-select: none;
+}
+.import-section textarea {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.78rem;
+  resize: vertical; min-height: 80px; outline: none; margin-top: 10px;
+}
+.import-section textarea::placeholder { color: var(--muted); }
+.import-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+.import-feedback { font-size: 0.7rem; margin-top: 6px; }
+.import-feedback.ok { color: var(--green); }
+.import-feedback.err { color: var(--red); }
+
+/* ── PRACTICE (WRITE) ── */
+#practice {
+  align-items: center;
+  padding: 20px 16px 48px;
+}
+.practice-topbar {
+  width: 100%; max-width: 680px;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+}
+.back-btn {
+  background: transparent; border: 1px solid var(--border); border-radius: 8px;
+  color: var(--muted); cursor: pointer; padding: 6px 12px;
+  font-family: 'DM Mono', monospace; font-size: 0.72rem; transition: all 0.15s;
+}
+.back-btn:hover { color: var(--text); border-color: var(--text); }
+.score-badge { display: flex; gap: 14px; }
+.score-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot-green { background: var(--green); }
+.dot-red { background: var(--red); }
+
+.progress-bar { width: 100%; max-width: 680px; height: 4px; background: var(--surface2); border-radius: 2px; margin-bottom: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+.progress-text { font-size: 0.68rem; color: var(--muted); text-align: right; margin-bottom: 16px; width: 100%; max-width: 680px; }
+
+.word-prompt {
+  text-align: center; margin-bottom: 20px; padding: 20px;
+  background: var(--surface); border-radius: 12px; border: 1px solid var(--border);
+  width: 100%; max-width: 680px;
+}
+.word-prompt .direction { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px; }
+.word-prompt .word { font-family: 'Fraunces', serif; font-size: 2.2rem; color: var(--accent); font-style: italic; line-height: 1.2; }
+
+.pen-size-wrap { display: flex; align-items: center; gap: 8px; font-size: 0.7rem; color: var(--muted); margin-bottom: 8px; width: 100%; max-width: 680px; }
+input[type=range] { accent-color: var(--accent2); width: 80px; }
+
+.canvas-wrap {
+  position: relative; border-radius: 12px; overflow: hidden;
+  border: 2px solid var(--border); background: #1a1a20;
+  margin-bottom: 12px; cursor: crosshair; transition: border-color 0.2s;
+  width: 100%; max-width: 680px;
+}
+.canvas-wrap:hover { border-color: var(--accent2); }
+canvas { display: block; width: 100%; height: 180px; touch-action: none; }
+.canvas-label { position: absolute; top: 10px; left: 12px; font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; pointer-events: none; }
+
+.canvas-actions { display: flex; gap: 8px; width: 100%; max-width: 680px; margin-bottom: 8px; }
+
+.api-inline { width: 100%; max-width: 680px; margin-bottom: 12px; }
+.api-inline input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 12px; color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 0.75rem; outline: none;
+}
+.api-inline input::placeholder { color: var(--muted); }
+
+.loading { display: none; text-align: center; padding: 10px; color: var(--muted); font-size: 0.78rem; align-items: center; gap: 8px; justify-content: center; width: 100%; max-width: 680px; }
+.spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+/* ── FLASHCARD ── */
+#flashcard {
+  align-items: center;
+  padding: 20px 16px 48px;
+}
+.fc-topbar {
+  width: 100%; max-width: 680px;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+}
+.fc-counter { font-size: 0.75rem; color: var(--muted); }
+
+.flashcard-wrap {
+  width: 100%; max-width: 500px;
+  perspective: 1000px;
+  margin-bottom: 24px;
+  cursor: pointer;
+}
+.flashcard {
+  width: 100%; height: 240px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.flashcard.flipped { transform: rotateY(180deg); }
+.fc-face {
+  position: absolute; inset: 0;
+  border-radius: 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.fc-front {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.fc-back {
+  background: var(--surface2);
+  border: 1px solid var(--accent2);
+  transform: rotateY(180deg);
+}
+.fc-lang { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 12px; }
+.fc-word { font-family: 'Fraunces', serif; font-size: 2rem; color: var(--accent); font-style: italic; text-align: center; line-height: 1.3; }
+.fc-tap-hint { font-size: 0.65rem; color: var(--muted); margin-top: 16px; }
+
+.fc-buttons { display: flex; gap: 12px; width: 100%; max-width: 500px; }
+.fc-btn {
+  flex: 1; padding: 14px; border-radius: 10px; border: none;
+  font-family: 'DM Mono', monospace; font-size: 0.82rem;
+  cursor: pointer; transition: all 0.15s; font-weight: 500;
+}
+.fc-btn-wrong { background: rgba(232,119,106,0.15); color: var(--red); border: 1px solid rgba(232,119,106,0.3); }
+.fc-btn-wrong:hover { background: rgba(232,119,106,0.25); }
+.fc-btn-correct { background: rgba(94,203,138,0.15); color: var(--green); border: 1px solid rgba(94,203,138,0.3); }
+.fc-btn-correct:hover { background: rgba(94,203,138,0.25); }
+.fc-btn-skip { flex: 0 0 auto; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); padding: 14px 16px; border-radius: 10px; font-family: 'DM Mono', monospace; font-size: 0.78rem; cursor: pointer; }
+
+.fc-hint { font-size: 0.7rem; color: var(--muted); margin-bottom: 16px; width: 100%; max-width: 500px; text-align: center; }
+
+/* ── SUMMARY ── */
+.summary-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  display: none; align-items: center; justify-content: center;
+  z-index: 80; flex-direction: column; padding: 24px;
+  animation: fadeIn 0.3s ease;
+}
+.summary-overlay.open { display: flex; }
+.summary-box { text-align: center; max-width: 400px; }
+.summary-score { font-family: 'Fraunces', serif; font-size: 5rem; color: var(--accent); font-style: italic; line-height: 1; margin-bottom: 8px; }
+.summary-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 28px; }
+.summary-btns { display: flex; flex-direction: column; gap: 10px; }
+
+/* ── RESULT OVERLAY ── */
+.result-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column; cursor: pointer;
+  animation: overlayIn 0.2s ease;
+}
+.result-overlay.correct { background: rgba(10,40,20,0.96); }
+.result-overlay.wrong   { background: rgba(40,10,10,0.96); }
+.result-overlay.open { display: flex; }
+.ov-icon { font-size: 5rem; margin-bottom: 12px; }
+.ov-title { font-family: 'Fraunces', serif; font-size: 3rem; font-weight: 700; margin-bottom: 10px; text-align: center; padding: 0 20px; }
+.result-overlay.correct .ov-title { color: var(--green); }
+.result-overlay.wrong   .ov-title { color: var(--red); }
+.ov-answer { font-size: 1rem; color: var(--muted); margin-bottom: 6px; text-align: center; padding: 0 20px; }
+.ov-answer strong { color: var(--text); }
+.ov-detail { font-size: 0.75rem; color: var(--muted); margin-bottom: 24px; text-align: center; padding: 0 20px; }
+.ov-tap { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 16px; }
+.ov-override {
+  font-family: 'DM Mono', monospace; font-size: 0.75rem;
+  background: transparent; border: 1px solid var(--green); color: var(--green);
+  border-radius: 8px; padding: 10px 20px; cursor: pointer; transition: background 0.2s;
+}
+.ov-override:hover { background: rgba(94,203,138,0.1); }
+
+/* ── SHARE MODAL ── */
+.share-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; align-items: center; justify-content: center; z-index: 90;
+}
+.share-modal.open { display: flex; }
+.share-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px; width: 90%; max-width: 480px;
+}
+.share-box h3 { font-family: 'Fraunces', serif; color: var(--accent); margin-bottom: 16px; font-size: 1.2rem; }
+.share-url {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; font-size: 0.72rem; color: var(--muted);
+  word-break: break-all; margin-bottom: 12px; line-height: 1.6;
+}
+.share-note { font-size: 0.68rem; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+
+/* ── SHARED SET IMPORT ── */
+.shared-banner {
+  background: var(--surface); border: 1px solid var(--accent2);
+  border-radius: 10px; padding: 14px 18px; width: 100%; max-width: 600px;
+  margin-bottom: 16px; display: none;
+}
+.shared-banner h4 { font-family: 'Fraunces', serif; color: var(--accent); margin-bottom: 4px; }
+.shared-banner p { font-size: 0.72rem; color: var(--muted); margin-bottom: 10px; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 11px 20px; border-radius: 9px; border: none;
+  font-family: 'DM Mono', monospace; font-size: 0.8rem;
+  cursor: pointer; transition: all 0.18s; letter-spacing: 0.04em;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: var(--accent); color: #0e0e10; font-weight: 500; }
+.btn-primary:hover { background: #f0e0b0; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--accent2); }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); font-size: 0.75rem; }
+.btn-ghost:hover { color: var(--text); }
+.btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(232,119,106,0.4); }
+.btn-danger:hover { background: rgba(232,119,106,0.1); }
+.btn-add {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent; border: 1px dashed var(--border); border-radius: 8px;
+  color: var(--muted); cursor: pointer; padding: 9px 14px;
+  font-family: 'DM Mono', monospace; font-size: 0.78rem;
+  width: 100%; max-width: 680px; transition: all 0.2s; margin-top: 4px;
+}
+.btn-add:hover { border-color: var(--accent2); color: var(--accent2); }
+
+/* ── MISC ── */
+.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; width: 100%; max-width: 680px; }
+.info-msg { font-size: 0.72rem; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; width: 100%; max-width: 680px; line-height: 1.6; }
+.info-msg a { color: var(--accent2); text-decoration: none; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── ADS ── */
+.ad-banner-bottom {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 6px;
+  text-align: center;
+  z-index: 40;
+  min-height: 60px;
+}
+.ad-interstitial {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.ad-interstitial.open { display: flex; }
+.ad-interstitial-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%; max-width: 480px;
+  text-align: center;
+}
+.ad-skip-btn {
+  margin-top: 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 20px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.ad-skip-btn:hover { color: var(--text); }
+.ad-countdown { font-size: 0.7rem; color: var(--muted); margin-top: 10px; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+@keyframes overlayIn { from { opacity:0; transform:scale(0.97); } to { opacity:1; transform:scale(1); } }
+</style>
+  <meta name="google-adsense-account" content="ca-pub-2000833266551127">
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2000833266551127" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<!-- ══ HOME ══ -->
+<div id="home" class="screen active">
+  <div class="home-header">
+    <h1>VokaWrite</h1>
+    <p>Vokabeltrainer mit Handschrift & Karteikarten</p>
+  </div>
+
+  <div class="api-bar" style="justify-content:center;border-color:var(--green)">
+    <span style="font-size:0.75rem;color:var(--green)">✓ Bereit zum Lernen</span>
+  </div>
+
+  <div id="sharedBanner" class="shared-banner">
+    <h4 id="sharedSetName">Geteiltes Lernset</h4>
+    <p id="sharedSetMeta"></p>
+    <button class="btn btn-primary" onclick="importSharedSet()">⬇ Lernset importieren</button>
+    <button class="btn btn-ghost" style="margin-left:8px" onclick="dismissShared()">Ignorieren</button>
+  </div>
+
+  <div class="sets-header">
+    <h2>Meine Lernsets</h2>
+    <button class="btn btn-primary" onclick="newSet()" style="font-size:0.75rem;padding:8px 14px">+ Neues Set</button>
+  </div>
+
+  <div class="sets-list" id="setsList"></div>
+</div>
+
+<!-- ══ EDITOR ══ -->
+<div id="editor" class="screen">
+  <div class="editor-topbar">
+    <button class="back-btn" onclick="goHome()">← Zurück</button>
+    <input type="text" id="setName" placeholder="Set-Name eingeben…" oninput="autoSave()">
+    <button class="btn btn-secondary" onclick="shareSet()" style="font-size:0.75rem;padding:8px 12px">🔗 Teilen</button>
+    <button class="btn btn-primary" onclick="saveAndGoHome()" style="font-size:0.75rem;padding:8px 14px">💾 Speichern</button>
+  </div>
+
+  <div class="lang-toggle">
+    <button class="lang-opt active" id="langFr" onclick="setLang('fr')">🇫🇷 Französisch</button>
+    <button class="lang-opt" id="langEn" onclick="setLang('en')">🇬🇧 Englisch</button>
+    <button class="lang-opt" id="langEs" onclick="setLang('es')">🇪🇸 Spanisch</button>
+    <button class="lang-opt" id="langOther" onclick="setLang('other')">🌍 Andere</button>
+  </div>
+
+  <details class="import-section">
+    <summary>⬇ Quizlet Import</summary>
+    <textarea id="importTextEditor" placeholder="Deutsch	Fremdsprache&#10;Hund	le chien&#10;Katze	le chat"></textarea>
+    <div class="import-row">
+      <button class="btn btn-secondary" onclick="doImportEditor()" style="font-size:0.75rem;padding:8px 14px">✓ Importieren</button>
+    </div>
+    <div class="import-feedback" id="importFeedback"></div>
+  </details>
+
+  <div class="col-labels">
+    <div class="col-label">Deutsch</div>
+    <div class="col-label" id="foreignLabel">Fremdsprache</div>
+    <div class="col-label"></div>
+  </div>
+
+  <div class="word-rows" id="wordRows"></div>
+  <button class="btn-add" onclick="addWordRow()">+ Wort hinzufügen</button>
+</div>
+
+<!-- ══ PRACTICE (WRITE) ══ -->
+<div id="practice" class="screen">
+  <div class="practice-topbar">
+    <button class="back-btn" onclick="goHome()">← Zurück</button>
+    <div class="score-badge">
+      <div class="score-item"><div class="dot dot-green"></div><span id="scoreCorrect">0</span> gekonnt</div>
+      <div class="score-item"><div class="dot dot-red"></div><span id="scoreWrong">0</span> wiederholt</div>
+    </div>
+    <button class="back-btn" onclick="startPractice()">↺ Neu</button>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="progress-text" id="progressText">0 / 0</div>
+
+  <div class="word-prompt" id="wordPrompt">
+    <div class="direction" id="promptDir">—</div>
+    <div class="word" id="promptWord">—</div>
+  </div>
+
+  <div class="pen-size-wrap">
+    Stiftgrösse: <input type="range" id="penSize" min="2" max="18" value="5" oninput="document.getElementById('penSizeLabel').textContent=this.value+'px'"> <span id="penSizeLabel">5px</span>
+  </div>
+
+  <div class="canvas-wrap" id="canvasWrap">
+    <span class="canvas-label">Hier schreiben ↓</span>
+    <canvas id="drawCanvas"></canvas>
+  </div>
+
+  <div class="canvas-actions">
+    <button class="btn btn-secondary" onclick="clearCanvas()" style="flex:0 0 auto">🗑 Löschen</button>
+    <button class="btn btn-ghost" id="dontKnowBtn" onclick="dontKnow()" style="flex:0 0 auto;border-color:var(--red);color:var(--red)">✗ Weiss ich nicht</button>
+    <button class="btn btn-primary" id="checkBtn" onclick="checkHandwriting()" disabled>✓ Prüfen</button>
+  </div>
+
+  <div class="loading" id="loading"><div class="spinner"></div> KI erkennt Schrift…</div>
+
+  <div class="info-msg" id="apiWarning" style="display:none">
+    🔑 Bitte API-Key auf der Startseite eingeben. Hol dir einen gratis auf <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+  </div>
+</div>
+
+<!-- ══ FLASHCARD ══ -->
+<div id="flashcard" class="screen">
+  <div class="fc-topbar">
+    <button class="back-btn" onclick="goHome()">← Zurück</button>
+    <div class="fc-counter" id="fcCounter">0 / 0</div>
+    <button class="back-btn" onclick="startFlashcard()">↺ Neu</button>
+  </div>
+
+  <div class="progress-bar" style="max-width:680px;width:100%"><div class="progress-fill" id="fcProgressFill" style="width:0%"></div></div>
+  <div class="progress-text" id="fcProgressText" style="max-width:680px;width:100%;margin-bottom:20px">0 / 0 gekonnt</div>
+
+  <div class="flashcard-wrap" onclick="flipCard()">
+    <div class="flashcard" id="theCard">
+      <div class="fc-face fc-front">
+        <div class="fc-lang" id="fcFrontLang">Deutsch</div>
+        <div class="fc-word" id="fcFrontWord">—</div>
+        <div class="fc-tap-hint">Tippen zum Umdrehen</div>
+      </div>
+      <div class="fc-face fc-back">
+        <div class="fc-lang" id="fcBackLang">Französisch</div>
+        <div class="fc-word" id="fcBackWord">—</div>
+        <div class="fc-tap-hint">Wie war's?</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fc-hint" id="fcHint">Drehe die Karte um, dann bewerte dich selbst</div>
+
+  <div class="fc-buttons">
+    <button class="fc-btn fc-btn-wrong" onclick="fcAnswer(false)" id="fcWrongBtn" disabled>✗ Falsch</button>
+    <button class="fc-btn fc-btn-correct" onclick="fcAnswer(true)" id="fcCorrectBtn" disabled>✓ Gewusst</button>
+  </div>
+</div>
+
+<!-- ══ RESULT OVERLAY ══ -->
+<div class="result-overlay" id="resultOverlay" onclick="overlayClick(event)">
+  <div class="ov-icon" id="ovIcon"></div>
+  <div class="ov-title" id="ovTitle"></div>
+  <div class="ov-answer" id="ovAnswer"></div>
+  <div class="ov-detail" id="ovDetail"></div>
+  <div class="ov-tap">Tippen zum Weiter</div>
+  <button class="ov-override" id="ovOverride" onclick="overlayOverride(event)" style="display:none">✓ Meine Antwort war richtig (KI hat sich geirrt)</button>
+</div>
+
+<!-- ══ SUMMARY ══ -->
+<div class="summary-overlay" id="summaryOverlay">
+  <div class="summary-box">
+    <div class="summary-score" id="summaryScore">0/0</div>
+    <div class="summary-label" id="summaryLabel">Runde beendet!</div>
+    <div class="summary-btns">
+      <button class="btn btn-primary" onclick="restartCurrent()" style="justify-content:center">↺ Weitermachen</button>
+      <button class="btn btn-secondary" onclick="restartFresh()" style="justify-content:center">🔄 Von vorne (Fortschritt löschen)</button>
+      <button class="btn btn-ghost" onclick="goHome()" style="justify-content:center">← Zurück zur Übersicht</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODE PICKER ══ -->
+<div class="mode-picker" id="modePicker">
+  <div class="mode-box">
+    <h3>Modus wählen</h3>
+    <div class="mode-options">
+      <div class="mode-opt" onclick="startMode('write')">
+        <div class="mode-opt-title">✏️ Schreiben</div>
+        <div class="mode-opt-desc">Wörter von Hand schreiben — KI prüft deine Antwort</div>
+      </div>
+      <div class="mode-opt" onclick="startMode('flash')">
+        <div class="mode-opt-title">🃏 Karteikarten</div>
+        <div class="mode-opt-desc">Karte umdrehen, selbst bewerten — klassisches Lernen</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" onclick="closePicker()" style="width:100%;margin-top:12px;justify-content:center">Abbrechen</button>
+  </div>
+</div>
+
+<!-- ══ SHARE MODAL ══ -->
+<div class="share-modal" id="shareModal">
+  <div class="share-box">
+    <h3>🔗 Lernset teilen</h3>
+    <div class="share-url" id="shareUrl"></div>
+    <div class="share-note">Dieser Link enthält alle Wörter des Sets. Wer ihn öffnet, kann das Set direkt importieren.</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="copyShareUrl()" style="flex:1;justify-content:center">📋 Link kopieren</button>
+      <button class="btn btn-ghost" onclick="closeShare()">Schliessen</button>
+    </div>
+    <div id="copiedMsg" style="font-size:0.7rem;color:var(--green);margin-top:8px;display:none">✓ Kopiert!</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let sets = [];          // [{id, name, lang, words:[{de,foreign}]}]
+let currentSetId = null;
+let currentSet = null;
+
+// Practice state
+let queue = [];
+let masteredSet = new Set();
+let wordStats = {}; // { wordKey: { correct: N, wrong: N } }
+let totalWords = 0;
+let currentItem = null;
+let correctThisRound = 0, wrongThisRound = 0;
+let hasDrawn = false;
+let isChecking = false;
+let currentMode = 'write'; // 'write' | 'flash'
+
+// Flashcard state
+let fcQueue = [];
+let fcMastered = new Set();
+let fcCurrentItem = null;
+let fcFlipped = false;
+
+// Editor state
+let editingLang = 'fr';
+let editingWords = [];
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('vw_sets');
+  if (saved) sets = JSON.parse(saved);
+  const key = localStorage.getItem('vw_key');
+  if (key) document.getElementById('apiKeyHome').value = key;
+
+  // Check for shared set in URL
+  checkSharedUrl();
+  renderSets();
+  initCanvas();
+});
+
+function saveKey() {
+  localStorage.setItem('vw_key', document.getElementById('apiKeyHome').value.trim());
+}
+
+function getKey() {
+  return localStorage.getItem('vw_key') || '';
+}
+
+function saveSets() {
+  localStorage.setItem('vw_sets', JSON.stringify(sets));
+}
+
+// ── PROGRESS STORAGE ──
+function getProgress(setId) {
+  const saved = localStorage.getItem('vw_progress_' + setId);
+  return saved ? JSON.parse(saved) : { mastered: [], stats: {} };
+  // mastered: array of wordKeys already known
+  // stats: { wordKey: { correct: N, wrong: N } }
+}
+
+function saveProgress(setId, mastered, stats) {
+  localStorage.setItem('vw_progress_' + setId, JSON.stringify({
+    mastered: Array.from(mastered),
+    stats: stats
+  }));
+}
+
+function clearProgress(setId) {
+  localStorage.removeItem('vw_progress_' + setId);
+}
+
+function wordKey(v) { return (v.lang||'') + '__' + v.de; }
+
+// ═══════════════════════════════════════════════
+// SCREEN NAVIGATION
+// ═══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  // Re-init canvas when practice screen becomes visible
+  if (id === 'practice') {
+    setTimeout(resizeCanvas, 50);
+  }
+}
+
+function goHome() {
+  closePicker();
+  document.getElementById('summaryOverlay').classList.remove('open');
+  document.getElementById('resultOverlay').classList.remove('open');
+  showScreen('home');
+  renderSets();
+}
+
+// ═══════════════════════════════════════════════
+// SETS MANAGEMENT
+// ═══════════════════════════════════════════════
+const langNames = { fr:'Französisch', en:'Englisch', es:'Spanisch', other:'Andere' };
+const langFlags = { fr:'🇫🇷', en:'🇬🇧', es:'🇪🇸', other:'🌍' };
+
+function renderSetProgress(s) {
+  const p = getProgress(s.id);
+  const total = s.words.length;
+  if (total === 0) return '—';
+  const mastered = p.mastered.length;
+  const pct = Math.round(mastered / total * 100);
+  if (mastered === 0) return '0% gelernt';
+  if (mastered === total) return '✓ Alle gekonnt!';
+  return `${pct}% gelernt (${mastered}/${total})`;
+}
+
+function renderSets() {
+  const list = document.getElementById('setsList');
+  if (sets.length === 0) {
+    list.innerHTML = `<div class="empty-state"><span>📚</span>Noch keine Lernsets.<br>Erstelle dein erstes Set mit dem "+" Knopf!</div>`;
+    return;
+  }
+  list.innerHTML = sets.map((s,i) => `
+    <div class="set-card">
+      <div class="set-card-info" onclick="openModePicker(${i})">
+        <div class="set-card-name">${s.name || 'Unbenanntes Set'}</div>
+        <div class="set-card-meta">${s.words.length} Wörter · ${langFlags[s.lang]||'🌍'} ${langNames[s.lang]||s.lang} · ${renderSetProgress(s)}</div>
+        ${s.words.length > 0 ? `<div class="set-progress-bar"><div class="set-progress-fill" style="width:${Math.round(getProgress(s.id).mastered.length/s.words.length*100)}%"></div></div>` : ''}
+      </div>
+      <div class="set-card-actions">
+        <button class="icon-btn" onclick="editSet(${i})" title="Bearbeiten">✏️</button>
+        <button class="icon-btn" onclick="shareSetFromHome(${i})" title="Teilen">🔗</button>
+        <button class="icon-btn danger" onclick="deleteSet(${i})" title="Löschen">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function newSet() {
+  const id = Date.now().toString();
+  sets.push({ id, name: '', lang: 'fr', words: [] });
+  saveSets();
+  editSet(sets.length - 1);
+}
+
+function editSet(idx) {
+  currentSetId = sets[idx].id;
+  currentSet = sets[idx];
+  editingLang = currentSet.lang;
+  editingWords = JSON.parse(JSON.stringify(currentSet.words));
+  document.getElementById('setName').value = currentSet.name;
+  setLang(editingLang);
+  renderWordRows();
+  showScreen('editor');
+}
+
+function deleteSet(idx) {
+  if (!confirm(`"${sets[idx].name || 'Set'}" wirklich löschen?`)) return;
+  sets.splice(idx, 1);
+  saveSets();
+  renderSets();
+}
+
+function setLang(lang) {
+  editingLang = lang;
+  ['fr','en','es','other'].forEach(l => {
+    document.getElementById('lang'+l.charAt(0).toUpperCase()+l.slice(1)).classList.toggle('active', l===lang);
+  });
+  const labels = { fr:'Français', en:'English', es:'Español', other:'Fremdsprache' };
+  document.getElementById('foreignLabel').textContent = labels[lang] || 'Fremdsprache';
+  autoSave();
+}
+
+function renderWordRows() {
+  const container = document.getElementById('wordRows');
+  container.innerHTML = '';
+  editingWords.forEach((w, i) => {
+    const row = document.createElement('div');
+    row.className = 'word-row';
+    row.innerHTML = `
+      <input type="text" value="${w.de||''}" placeholder="Deutsch" oninput="editingWords[${i}].de=this.value;autoSave()">
+      <input type="text" value="${w.foreign||''}" placeholder="${document.getElementById('foreignLabel').textContent}" oninput="editingWords[${i}].foreign=this.value;autoSave()">
+      <button class="btn-del" onclick="deleteWordRow(${i})">×</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function addWordRow() {
+  editingWords.push({ de: '', foreign: '' });
+  renderWordRows();
+  const rows = document.querySelectorAll('#wordRows .word-row');
+  rows[rows.length-1].querySelector('input').focus();
+}
+
+function deleteWordRow(i) {
+  editingWords.splice(i, 1);
+  renderWordRows();
+}
+
+function autoSave() {
+  const idx = sets.findIndex(s => s.id === currentSetId);
+  if (idx === -1) return;
+  sets[idx].name = document.getElementById('setName').value;
+  sets[idx].lang = editingLang;
+  sets[idx].words = editingWords.filter(w => w.de && w.foreign);
+  currentSet = sets[idx];
+  saveSets();
+}
+
+function saveAndGoHome() {
+  autoSave();
+  goHome();
+}
+
+// IMPORT
+function doImportEditor() {
+  const text = document.getElementById('importTextEditor').value;
+  const fb = document.getElementById('importFeedback');
+  const lines = text.trim().split('\n').filter(l=>l.trim());
+  const words = [];
+  for (const line of lines) {
+    const parts = line.split(/\t|;/).map(p=>p.trim()).filter(Boolean);
+    if (parts.length >= 2) words.push({ de: parts[0], foreign: parts[1] });
+  }
+  if (words.length === 0) { fb.textContent = 'Keine Wörter gefunden. Format: Deutsch TAB Fremdsprache'; fb.className='import-feedback err'; return; }
+  const existing = new Set(editingWords.map(w=>w.de.toLowerCase()));
+  let added = 0;
+  for (const w of words) {
+    if (!existing.has(w.de.toLowerCase())) { editingWords.push(w); existing.add(w.de.toLowerCase()); added++; }
+  }
+  fb.textContent = `✓ ${added} neue Wörter hinzugefügt!`;
+  fb.className = 'import-feedback ok';
+  document.getElementById('importTextEditor').value = '';
+  renderWordRows();
+  autoSave();
+}
+
+// ═══════════════════════════════════════════════
+// MODE PICKER
+// ═══════════════════════════════════════════════
+let pickerSetIdx = null;
+
+function openModePicker(idx) {
+  pickerSetIdx = idx;
+  document.getElementById('modePicker').classList.add('open');
+}
+
+function closePicker() {
+  document.getElementById('modePicker').classList.remove('open');
+}
+
+function startMode(mode) {
+  closePicker();
+  currentSet = sets[pickerSetIdx];
+  currentMode = mode;
+  if (mode === 'write') {
+    startPractice();
+    showScreen('practice');
+  } else {
+    startFlashcard();
+    showScreen('flashcard');
+  }
+}
+
+function restartFresh() {
+  clearProgress(currentSet.id);
+  document.getElementById('summaryOverlay').classList.remove('open');
+  if (currentMode === 'write') { startPractice(true); showScreen('practice'); }
+  else { startFlashcard(true); showScreen('flashcard'); }
+}
+
+function restartCurrent() {
+  document.getElementById('summaryOverlay').classList.remove('open');
+  if (currentMode === 'write') { startPractice(); showScreen('practice'); }
+  else { startFlashcard(); showScreen('flashcard'); }
+}
+
+// ═══════════════════════════════════════════════
+// PRACTICE — WRITE MODE
+// ═══════════════════════════════════════════════
+function buildQueue() {
+  const all = currentSet.words.map(w => ({...w, lang: currentSet.lang, emoji: langFlags[currentSet.lang]||'🌍'}));
+  queue = shuffle(all.filter(v => !masteredSet.has(wordKey(v))));
+  totalWords = all.length;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function startPractice(fresh = false) {
+  const progress = getProgress(currentSet.id);
+  if (fresh || progress.mastered.length === 0) {
+    masteredSet = new Set();
+    wordStats = {};
+  } else {
+    masteredSet = new Set(progress.mastered);
+    wordStats = progress.stats || {};
+  }
+  correctThisRound = 0; wrongThisRound = 0;
+  document.getElementById('scoreCorrect').textContent = '0';
+  document.getElementById('scoreWrong').textContent = '0';
+  document.getElementById('summaryOverlay').classList.remove('open');
+  buildQueue();
+  renderNextWord();
+  clearCanvas();
+}
+
+function renderNextWord() {
+  if (queue.length === 0) { showSummary(); return; }
+  currentItem = queue[0];
+  updateProgress();
+  const langName = langNames[currentSet.lang] || currentSet.lang;
+  document.getElementById('promptDir').textContent = `${currentItem.emoji} Schreibe auf ${langName}:`;
+  document.getElementById('promptWord').textContent = currentItem.de;
+  document.getElementById('checkBtn').disabled = true;
+  document.getElementById('dontKnowBtn').disabled = false;
+  clearCanvas();
+}
+
+function updateProgress() {
+  const mastered = masteredSet.size;
+  document.getElementById('progressFill').style.width = `${totalWords?mastered/totalWords*100:0}%`;
+  document.getElementById('progressText').textContent = `${mastered} / ${totalWords} gekonnt — noch ${queue.length} offen`;
+}
+
+function nextWord() { renderNextWord(); }
+
+function showSummary() {
+  document.getElementById('summaryScore').textContent = `${masteredSet.size}/${totalWords}`;
+  document.getElementById('summaryLabel').textContent = currentMode === 'write' ? 'Alle Wörter gemeistert! 🎉' : 'Runde beendet!';
+  showAd(() => { document.getElementById('summaryOverlay').classList.add('open'); });
+}
+
+let adCallback = null;
+let adTimer = null;
+
+function showAd(callback) {
+  adCallback = callback;
+  const skipBtn = document.getElementById('adSkipBtn');
+  const secsEl = document.getElementById('adSecs');
+  skipBtn.disabled = true;
+  let secs = 5;
+  secsEl.textContent = secs;
+  document.getElementById('adInterstitial').classList.add('open');
+  try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+  adTimer = setInterval(() => {
+    secs--;
+    secsEl.textContent = secs;
+    if (secs <= 0) {
+      clearInterval(adTimer);
+      skipBtn.disabled = false;
+      document.getElementById('adCountdown').textContent = 'Bereit zum Überspringen';
+    }
+  }, 1000);
+}
+
+function closeAd() {
+  clearInterval(adTimer);
+  document.getElementById('adInterstitial').classList.remove('open');
+  document.getElementById('adSkipBtn').disabled = true;
+  document.getElementById('adCountdown').innerHTML = 'Überspringen in <span id="adSecs">5</span>s…';
+  if (adCallback) { adCallback(); adCallback = null; }
+}
+
+// ── CANVAS ──
+let canvas, ctx, drawing = false, lastX = 0, lastY = 0;
+
+function initCanvas() {
+  canvas = document.getElementById('drawCanvas');
+  ctx = canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDraw);
+  canvas.addEventListener('mouseleave', stopDraw);
+  canvas.addEventListener('touchstart', e=>{e.preventDefault();startDraw(e.touches[0]);},{passive:false});
+  canvas.addEventListener('touchmove', e=>{e.preventDefault();draw(e.touches[0]);},{passive:false});
+  canvas.addEventListener('touchend', stopDraw);
+}
+
+function resizeCanvas() {
+  if (!canvas) return;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width; canvas.height = 180;
+  clearCanvas();
+}
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return { x:(e.clientX-rect.left)*(canvas.width/rect.width), y:(e.clientY-rect.top)*(canvas.height/rect.height) };
+}
+
+function startDraw(e) {
+  drawing=true; const {x,y}=getPos(e); lastX=x; lastY=y;
+  ctx.beginPath(); ctx.arc(x,y,parseInt(document.getElementById('penSize').value)/2,0,Math.PI*2);
+  ctx.fillStyle='#f0ece2'; ctx.fill();
+  hasDrawn=true; document.getElementById('checkBtn').disabled=false;
+}
+function draw(e) {
+  if (!drawing) return;
+  const {x,y}=getPos(e); const size=parseInt(document.getElementById('penSize').value);
+  ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(x,y);
+  ctx.strokeStyle='#f0ece2'; ctx.lineWidth=size; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
+  lastX=x; lastY=y;
+}
+function stopDraw() { drawing=false; }
+
+function clearCanvas() {
+  if (!canvas) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  hasDrawn=false;
+  if (document.getElementById('checkBtn')) document.getElementById('checkBtn').disabled=true;
+}
+
+// ── AI CHECK ──
+async function checkHandwriting() {
+  if (!hasDrawn || isChecking) return;
+
+  // Pixel check
+  const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+  let filled=0;
+  for (let i=3;i<imgData.data.length;i+=4) if(imgData.data[i]>10) filled++;
+  if (filled < 100) { alert('Bitte schreibe zuerst das Wort!'); return; }
+
+  document.getElementById('apiWarning').style.display='none';
+
+  isChecking=true;
+  document.getElementById('checkBtn').disabled=true;
+  document.getElementById('loading').style.display='flex';
+
+  const imageDataB64 = canvas.toDataURL('image/png').split(',')[1];
+  const langName = langNames[currentSet.lang] || currentSet.lang;
+  const correctAnswer = currentItem.foreign;
+
+  const prompt = `Du bist ein strenger Vokabeltrainer-Assistent.
+
+Ich lerne ${langName}. Das deutsche Wort war: "${currentItem.de}"
+Die EINZIG korrekte Antwort ist: "${correctAnswer}"
+
+Im Bild hat der Lernende das Wort handgeschrieben.
+
+REGELN:
+0. Falls das Bild leer ist oder nur Kritzeleien ohne erkennbare Buchstaben → erkannt: "(nichts)", korrekt: false
+1. Lies die Handschrift so genau wie möglich ab
+2. Vergleiche Buchstabe für Buchstabe mit "${correctAnswer}"
+3. Gross-/Kleinschreibung MUSS stimmen
+4. Fehlende oder extra Buchstaben = FALSCH
+5. Akzente MÜSSEN klar erkennbar sein — fehlt ein Akzent oder ist er nicht eindeutig → FALSCH
+6. Nur wenn das Wort EXAKT stimmt → korrekt: true
+7. Im Zweifel: lieber streng sein — niemals raten!
+
+Antworte NUR mit diesem JSON:
+{
+  "erkannt": "exakt was du im Bild siehst",
+  "korrekt": true oder false,
+  "fehler": "was genau falsch ist (leer wenn richtig)",
+  "feedback": "1 Satz Feedback auf Deutsch"
+}`;
+
+  try {
+    const WORKER_URL = 'DEINE_WORKER_URL_HIER'; // z.B. https://vokawrite.deinname.workers.dev
+    const response = await fetch(WORKER_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:300,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:'image/png',data:imageDataB64}},
+          {type:'text',text:prompt}
+        ]}]
+      })
+    });
+    const data = await response.json();
+    document.getElementById('loading').style.display='none';
+    if (!response.ok) throw new Error(data.error?.message||'API Fehler');
+    const result = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    showResult(result);
+  } catch(err) {
+    document.getElementById('loading').style.display='none';
+    isChecking=false;
+    document.getElementById('checkBtn').disabled=false;
+    alert('Fehler: '+err.message);
+  }
+}
+
+function showResult(result) {
+  const ov = document.getElementById('resultOverlay');
+  const wk = wordKey(currentItem);
+  if (!wordStats[wk]) wordStats[wk] = { correct: 0, wrong: 0 };
+
+  if (result.korrekt) {
+    queue.shift(); masteredSet.add(wk);
+    wordStats[wk].correct++;
+    correctThisRound++; document.getElementById('scoreCorrect').textContent=correctThisRound;
+    ov.className='result-overlay correct open';
+    document.getElementById('ovIcon').textContent='✓';
+    document.getElementById('ovTitle').textContent='Richtig!';
+    document.getElementById('ovAnswer').innerHTML=`<strong>${currentItem.foreign}</strong>`;
+    document.getElementById('ovDetail').textContent=`Erkannt: "${result.erkannt}"`;
+    document.getElementById('ovOverride').style.display='none';
+  } else {
+    const missed=queue.shift(); queue.push(missed);
+    wordStats[wk].wrong++;
+    wrongThisRound++; document.getElementById('scoreWrong').textContent=wrongThisRound;
+    ov.className='result-overlay wrong open';
+    document.getElementById('ovIcon').textContent='✗';
+    document.getElementById('ovTitle').textContent='Falsch!';
+    document.getElementById('ovAnswer').innerHTML=`Richtig wäre: <strong>${currentItem.foreign}</strong>`;
+    document.getElementById('ovDetail').textContent=`Erkannt: "${result.erkannt}"${result.fehler?' — '+result.fehler:''}`;
+    document.getElementById('ovOverride').style.display='block';
+  }
+  saveProgress(currentSet.id, masteredSet, wordStats);
+  updateProgress();
+  isChecking=false;
+}
+
+function dontKnow() {
+  if (isChecking) return;
+  const missed=queue.shift(); queue.push(missed);
+  const wk = wordKey(currentItem);
+  if (!wordStats[wk]) wordStats[wk] = { correct: 0, wrong: 0 };
+  wordStats[wk].wrong++;
+  wrongThisRound++; document.getElementById('scoreWrong').textContent=wrongThisRound;
+  saveProgress(currentSet.id, masteredSet, wordStats);
+  const ov=document.getElementById('resultOverlay');
+  ov.className='result-overlay wrong open';
+  document.getElementById('ovIcon').textContent='✗';
+  document.getElementById('ovTitle').textContent='Nicht gewusst!';
+  document.getElementById('ovAnswer').innerHTML=`Richtig wäre: <strong>${currentItem.foreign}</strong>`;
+  document.getElementById('ovDetail').textContent='';
+  document.getElementById('ovOverride').style.display='none';
+  updateProgress();
+}
+
+function overlayClick(e) {
+  if (e.target.id==='ovOverride') return;
+  closeOverlay();
+}
+function overlayOverride(e) {
+  e.stopPropagation();
+  const key=wordKey(currentItem);
+  const idx=queue.findIndex(v=>wordKey(v)===key);
+  if(idx!==-1) queue.splice(idx,1);
+  masteredSet.add(key);
+  if (!wordStats[key]) wordStats[key] = { correct: 0, wrong: 0 };
+  wordStats[key].correct++;
+  wrongThisRound=Math.max(0,wrongThisRound-1); correctThisRound++;
+  document.getElementById('scoreWrong').textContent=wrongThisRound;
+  document.getElementById('scoreCorrect').textContent=correctThisRound;
+  saveProgress(currentSet.id, masteredSet, wordStats);
+  updateProgress();
+  closeOverlay();
+}
+function closeOverlay() {
+  document.getElementById('resultOverlay').classList.remove('open');
+  if(queue.length===0){showSummary();return;}
+  nextWord();
+}
+
+// ═══════════════════════════════════════════════
+// FLASHCARD MODE
+// ═══════════════════════════════════════════════
+function startFlashcard(fresh = false) {
+  const progress = getProgress(currentSet.id);
+  fcMastered = (!fresh && progress.mastered.length > 0) ? new Set(progress.mastered) : new Set();
+  fcQueue = shuffle(currentSet.words.map(w=>({...w})));
+  fcCurrentItem = null;
+  fcFlipped = false;
+  document.getElementById('summaryOverlay').classList.remove('open');
+  document.getElementById('theCard').classList.remove('flipped');
+  document.getElementById('fcWrongBtn').disabled=true;
+  document.getElementById('fcCorrectBtn').disabled=true;
+  renderFCCard();
+}
+
+function renderFCCard() {
+  if (fcQueue.length===0) { showFCSummary(); return; }
+  fcCurrentItem = fcQueue[0];
+  fcFlipped = false;
+  document.getElementById('theCard').classList.remove('flipped');
+  document.getElementById('fcWrongBtn').disabled=true;
+  document.getElementById('fcCorrectBtn').disabled=true;
+  document.getElementById('fcHint').textContent='Drehe die Karte um, dann bewerte dich selbst';
+
+  const langName = langNames[currentSet.lang]||currentSet.lang;
+  document.getElementById('fcFrontLang').textContent='Deutsch';
+  document.getElementById('fcFrontWord').textContent=fcCurrentItem.de;
+  document.getElementById('fcBackLang').textContent=langName;
+  document.getElementById('fcBackWord').textContent=fcCurrentItem.foreign;
+
+  const total = currentSet.words.length;
+  const mastered = fcMastered.size;
+  document.getElementById('fcProgressFill').style.width=`${total?mastered/total*100:0}%`;
+  document.getElementById('fcProgressText').textContent=`${mastered} / ${total} gekonnt — noch ${fcQueue.length} offen`;
+  document.getElementById('fcCounter').textContent=`${mastered} / ${total}`;
+}
+
+function flipCard() {
+  if (fcQueue.length===0) return;
+  fcFlipped=!fcFlipped;
+  document.getElementById('theCard').classList.toggle('flipped',fcFlipped);
+  if (fcFlipped) {
+    document.getElementById('fcWrongBtn').disabled=false;
+    document.getElementById('fcCorrectBtn').disabled=false;
+    document.getElementById('fcHint').textContent='Wie war\'s?';
+  }
+}
+
+function fcAnswer(correct) {
+  if (!fcFlipped) return;
+  const wk2 = fcCurrentItem.de;
+  if (correct) {
+    fcQueue.shift();
+    fcMastered.add(wk2);
+    const p = getProgress(currentSet.id);
+    if (!p.stats[wk2]) p.stats[wk2] = { correct: 0, wrong: 0 };
+    p.stats[wk2].correct++;
+    saveProgress(currentSet.id, fcMastered, p.stats);
+  } else {
+    const missed=fcQueue.shift();
+    fcQueue.push(missed);
+  }
+  renderFCCard();
+}
+
+function showFCSummary() {
+  const total = currentSet.words.length;
+  document.getElementById('summaryScore').textContent=`${fcMastered.size}/${total}`;
+  document.getElementById('summaryLabel').textContent='Alle Karten gemeistert! 🎉';
+  document.getElementById('summaryOverlay').classList.add('open');
+}
+
+// ═══════════════════════════════════════════════
+// SHARE / IMPORT
+// ═══════════════════════════════════════════════
+function shareSet() { autoSave(); shareSetData(currentSet); }
+function shareSetFromHome(idx) { shareSetData(sets[idx]); }
+
+function shareSetData(set) {
+  const data = { name: set.name, lang: set.lang, words: set.words };
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const url = `${location.href.split('?')[0]}?set=${encoded}`;
+  document.getElementById('shareUrl').textContent = url;
+  document.getElementById('shareModal').classList.add('open');
+  document.getElementById('copiedMsg').style.display='none';
+}
+
+function copyShareUrl() {
+  const url = document.getElementById('shareUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    document.getElementById('copiedMsg').style.display='block';
+    setTimeout(()=>document.getElementById('copiedMsg').style.display='none',2000);
+  });
+}
+
+function closeShare() { document.getElementById('shareModal').classList.remove('open'); }
+
+let pendingSharedSet = null;
+
+function checkSharedUrl() {
+  const params = new URLSearchParams(location.search);
+  const encoded = params.get('set');
+  if (!encoded) return;
+  try {
+    const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    pendingSharedSet = data;
+    document.getElementById('sharedBanner').style.display='block';
+    document.getElementById('sharedSetName').textContent=`📥 "${data.name||'Geteiltes Set'}"`;
+    document.getElementById('sharedSetMeta').textContent=`${data.words.length} Wörter · ${langFlags[data.lang]||'🌍'} ${langNames[data.lang]||data.lang}`;
+    // Clean URL
+    history.replaceState(null,'',location.pathname);
+  } catch(e) {}
+}
+
+function importSharedSet() {
+  if (!pendingSharedSet) return;
+  const id = Date.now().toString();
+  sets.push({ id, name: pendingSharedSet.name||'Importiertes Set', lang: pendingSharedSet.lang||'fr', words: pendingSharedSet.words||[] });
+  saveSets();
+  pendingSharedSet=null;
+  document.getElementById('sharedBanner').style.display='none';
+  renderSets();
+}
+
+function dismissShared() {
+  pendingSharedSet=null;
+  document.getElementById('sharedBanner').style.display='none';
+}
+
+// ═══════════════════════════════════════════════
+// EDITOR — SHARE FROM EDITOR
+// ═══════════════════════════════════════════════
+function shareSet() {
+  autoSave();
+  shareSetData(currentSet);
+}
+</script>
+<!-- Sticky Bottom Banner Ad -->
+<div class="ad-banner-bottom">
+  <ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-2000833266551127"
+     data-ad-slot="auto"
+     data-ad-format="horizontal"
+     data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<!-- Interstitial Ad (nach jeder Runde) -->
+<div class="ad-interstitial" id="adInterstitial">
+  <div class="ad-interstitial-box">
+    <div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px">Werbung</div>
+    <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-2000833266551127"
+       data-ad-slot="auto"
+       data-ad-format="rectangle"
+       data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    <div class="ad-countdown" id="adCountdown">Überspringen in <span id="adSecs">5</span>s…</div>
+    <button class="ad-skip-btn" id="adSkipBtn" onclick="closeAd()" disabled>✕ Überspringen</button>
+  </div>
+</div>
+
+</body>
+</html>
